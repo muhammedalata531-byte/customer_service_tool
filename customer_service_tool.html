@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>أداة خدمة العملاء - مجمع الحياة الطبي</title>
+<style>
+body{font-family:Tahoma,Arial;background:#f4f6f8;margin:0;padding:20px;}
+.container{display:flex;gap:20px;flex-wrap:wrap;max-width:1100px;margin:auto;}
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 2px 6px rgba(0,0,0,.1);flex:1;min-width:320px;}
+h2{color:#2c3e50;margin-top:0;}
+textarea{width:100%;min-height:110px;border:1px solid #ccc;border-radius:6px;padding:8px;font-size:14px;font-family:inherit;resize:vertical;}
+input{width:100%;padding:8px;margin:4px 0 10px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;font-family:inherit;}
+button{background:#25D366;color:#fff;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-size:14px;margin-top:6px;}
+button:hover{background:#1ebd59;}
+.tpl{border:1px solid #e0e0e0;border-radius:8px;padding:10px;margin-bottom:14px;background:#fafafa;}
+.tpl h4{margin:0 0 6px;color:#128C7E;}
+.result{margin-top:12px;padding:10px;background:#eafaf1;border-radius:6px;font-weight:bold;color:#146c43;display:none;}
+label{font-size:13px;color:#555;}
+</style>
+</head>
+<body>
+<h1 style="text-align:center;color:#128C7E;">🛠 أداة خدمة العملاء - مجمع الحياة الطبي</h1>
+<div class="container">
+
+<div class="card">
+<h2>📋 القوالب الجاهزة</h2>
+
+<div class="tpl">
+<h4>1) الترحيب وطلب البيانات</h4>
+<textarea id="t1">معاك محمد من مجمع الحياة الوطني - قسم الرعاية المنزلية 🏠
+لإكمال طلب الزيارة، من فضلك أرسل:
+1) الاسم الكامل
+2) اللوكيشن (اضغط 📎 ثم Location وشاركها معنا)
+3) الوقت المناسب للزيارة</textarea>
+<button onclick="copyText('t1')">📋 نسخ</button>
+</div>
+
+<div class="tpl">
+<h4>2) تأكيد استلام الطلب</h4>
+<label>السعر:</label>
+<input id="priceInput" placeholder="مثال: 150">
+<textarea id="t2">تم تأكيد حجزك بنجاح ✅
+
+💰 السعر المبدئي للخدمة: [السعر] ريال
+يرجى العلم أن هذا سعر تقديري مبدئي، وقد تُضاف رسوم إضافية على الفاتورة النهائية حسب الفحص الفعلي والاحتياج الحقيقي أثناء الزيارة.
+
+سيتم إعلامك بأي تكلفة إضافية بشكل واضح وشفاف قبل تنفيذها ✅
+شكراً لثقتك بنا 🙏</textarea>
+<button onclick="copyPriceTemplate()">📋 نسخ بعد إدراج السعر</button>
+</div>
+
+<div class="tpl">
+<h4>3) طلب توضيح العنوان</h4>
+<textarea id="t3">شكراً على مشاركة الموقع 🙏
+حابين نتأكد من التفاصيل، ممكن توضح لنا:
+- علامة مميزة قريبة من المكان (محل، مسجد، لافتة)
+- رقم الدور والشقة إن وُجد
+هذا يساعدنا نوصل بسرعة وبدون تأخير 🚗</textarea>
+<button onclick="copyText('t3')">📋 نسخ</button>
+</div>
+
+<div class="tpl">
+<h4>4) رسالة تأخير / ازدحام</h4>
+<textarea id="t4">نعتذر عن التأخير في الرد 🙏
+حالياً يوجد ضغط في الطلبات، وسنقوم بالرد عليك وتأكيد موعد الزيارة في أقرب وقت ممكن.
+شكراً لتفهمك وصبرك 🌸</textarea>
+<button onclick="copyText('t4')">📋 نسخ</button>
+</div>
+
+</div>
+
+<div class="card">
+<h2>📍 حاسبة أقرب فرع</h2>
+<label>أدخل رابط لوكيشن العميل من واتساب (Google Maps):</label>
+<input id="custLink" placeholder="https://maps.app.goo.gl/....">
+<button onclick="findNearest()">📌 احسب أقرب فرع</button>
+<div id="res" class="result"></div>
+
+<hr style="margin:20px 0;border:none;border-top:1px solid #eee;">
+<label>أو أدخل الإحداثيات مباشرة (خط العرض, خط الطول):</label>
+<input id="custCoords" placeholder="24.7136, 46.6753">
+<button onclick="findNearestFromCoords()">📌 احسب من الإحداثيات</button>
+
+<h3 style="margin-top:22px;color:#555;">الفروع المسجلة</h3>
+<table style="width:100%;font-size:13px;border-collapse:collapse;">
+<tr style="text-align:right;border-bottom:1px solid #ddd;"><th>الفرع</th><th>Lat</th><th>Long</th></tr>
+<tbody id="branchTable"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+const branches = [
+  {name:"الفيحاء", lat:24.6850278, lng:46.7967778},
+  {name:"اشبيليا", lat:24.7859167, lng:46.7692500},
+  {name:"الرمال",  lat:24.8456389, lng:46.8256389},
+  {name:"النفل",   lat:24.7919722, lng:46.6786944},
+  {name:"النظيم",  lat:24.8146389, lng:46.8800833}
+];
+
+const tbody = document.getElementById('branchTable');
+branches.forEach(b=>{
+  tbody.innerHTML += `<tr><td>${b.name}</td><td>${b.lat}</td><td>${b.lng}</td></tr>`;
+});
+
+function copyText(id){
+  const el = document.getElementById(id);
+  el.select();
+  try{document.execCommand('copy'); alert('تم نسخ الرسالة ✅');}catch(e){alert('تعذر النسخ التلقائي، انسخ النص يدوياً.');}
+}
+
+function copyPriceTemplate(){
+  const price = document.getElementById('priceInput').value.trim();
+  const el = document.getElementById('t2');
+  const text = el.value.replace('[السعر]', price || '___');
+  const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); alert('تم نسخ رسالة السعر ✅');}catch(e){alert('تعذر النسخ التلقائي، انسخ النص يدوياً.');} document.body.removeChild(ta);
+}
+
+function haversine(lat1, lon1, lat2, lon2){
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function showResult(lat, lng){
+  let nearest = null, minDist = Infinity;
+  branches.forEach(b=>{
+    const d = haversine(lat, lng, b.lat, b.lng);
+    if(d < minDist){ minDist = d; nearest = b; }
+  });
+  const res = document.getElementById('res');
+  res.style.display = 'block';
+  res.innerHTML = `✅ أقرب فرع: <span style="color:#128C7E">${nearest.name}</span> (${minDist.toFixed(1)} كم تقريباً)`;
+}
+
+async function findNearest(){
+  const link = document.getElementById('customLink') ? '' : document.getElementById('custLink').value.trim();
+  if(!link){ alert('من فضلك أدخل رابط اللوكيشن'); return; }
+  // Try to extract coords directly from link if present (e.g. @lat,lng or q=lat,lng)
+  let match = link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || link.match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(match){
+    showResult(parseFloat(match[1]), parseFloat(match[2]));
+  } else {
+    alert('لم أستطع استخراج الإحداثيات من هذا الرابط تلقائياً (روابط maps.app.goo.gl المختصرة تحتاج فتحها أولاً في المتصفح لتظهر الإحداثيات في الرابط الكامل، ثم استخدم خيار "الإحداثيات مباشرة").');
+  }
+}
+
+function findNearestFromCoords(){
+  const val = document.getElementById('custCoords').value.trim();
+  const parts = val.split(',').map(s=>parseFloat(s.trim()));
+  if(parts.length !== 2 || isNaN(parts[0]) || isNaN(parts[1])){
+    alert('من فضلك أدخل الإحداثيات بصيغة صحيحة: خط العرض, خط الطول');
+    return;
+  }
+  showResult(parts[0], parts[1]);
+}
+</script>
+
+</body>
+</html>
